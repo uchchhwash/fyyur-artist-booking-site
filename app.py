@@ -4,6 +4,7 @@ import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
 from flask_wtf import Form
 from forms import *
 from models import *
@@ -273,7 +274,12 @@ def create_artist_submission():
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
   search_term = request.form.get('search_term', '')
-  result = Artist.query.filter(Artist.name.ilike(f'%{search_term}%'))
+ 
+  result = Artist.query.filter(func.lower(Artist.city) == func.lower(f'{search_term}'))
+  if result.count() < 1:
+    result = Artist.query.filter(func.lower(Artist.state) == func.lower(f'{search_term}'))
+    if result.count() < 1:
+      result = Artist.query.filter(Artist.name.ilike(f'%{search_term}%'))
   response={
     "count": result.count(),
     "data": result

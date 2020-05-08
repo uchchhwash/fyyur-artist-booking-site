@@ -103,7 +103,13 @@ def create_venue_submission():
 def search_venues():
   #case-insensitive search implemented
   search_term = request.form.get('search_term', '')
-  result = Venue.query.filter(Venue.name.ilike(f'%{search_term}%'))
+  
+  result = Venue.query.filter(func.lower(Venue.city) == func.lower(f'{search_term}'))
+  if result.count() < 1:
+    result = Venue.query.filter(func.lower(Venue.state) == func.lower(f'{search_term}'))
+    if result.count() < 1:
+      result = Venue.query.filter(Venue.name.ilike(f'%{search_term}%'))
+  
   response={
     "count": result.count(),
     "data": result

@@ -23,10 +23,10 @@ app.jinja_env.filters['datetime'] = format_datetime
 def index():
   venues = Venue.query.order_by(desc(Venue.id)).limit(recent_data_offset)
   venue_data = []
-  for v in venues:
+  for venue in venues:
     venue_data.append({
-        "id": v.id,
-        "name": v.name
+        "id": venue.id,
+        "name": venue.name
     })
 
   artists = Artist.query.order_by(desc(Artist.id)).limit(recent_data_offset)
@@ -94,7 +94,7 @@ def create_venue_submission():
       address=form.address.data,
       phone=form.phone.data, 
       image_link=form.image_link.data,
-      genres=form.genres.data, 
+      genres=','.join(form.genres.data),
       facebook_link=form.facebook_link.data, 
       website=form.website.data, 
       seeking_description=form.seeking_description.data,
@@ -106,7 +106,7 @@ def create_venue_submission():
   # on successful db insert, flash success
     flash('Venue ' + request.form['name'] + ' was successfully listed!')
   
-  except():
+  except:
     db.session.rollback()
     flash('Error. Venue ' + request.form['name'] + ' listing Unsuccessful')
   finally:
@@ -155,11 +155,11 @@ def show_venue(venue_id):
       upcoming_shows.append(data)
     else:
       past_shows.append(data)
-
+  
   data={
     "id": venue.id,
     "name": venue.name,
-    "genres": venue.genres,
+    "genres": [x.strip() for x in venue.genres.split(',')],
     "address": venue.address,
     "city": venue.city,
     "state": venue.state,
@@ -186,7 +186,7 @@ def edit_venue(venue_id):
   venue={
     "id": venue.id,
     "name": venue.name,
-    "genres": venue.genres,
+    "genres": [x.strip() for x in venue.genres.split(',')],
     "address": venue.address,
     "city": venue.city,
     "state": venue.state,
@@ -208,7 +208,7 @@ def edit_venue_submission(venue_id):
     venue = Venue.query.get(venue_id)
     name = form.name.data
     venue.name = name
-    venue.genres = form.genres.data
+    venue.genres = ','.join(form.genres.data)
     venue.city = form.city.data
     venue.state = form.state.data
     venue.address = form.address.data
@@ -218,12 +218,12 @@ def edit_venue_submission(venue_id):
     venue.image_link = form.image_link.data
     venue.seeking_talent = form.seeking_talent.data
     venue.seeking_description = form.seeking_description.data
-
+  
     db.session.commit()
     flash('Venue ' + name + ' has been updated')
   except:
     db.session.rollback()
-    flash('Error! Ypdate Venue Unsuccessful')
+    flash('Error! Update Venue Unsuccessful')
   finally:
     db.session.close()
 
@@ -275,7 +275,7 @@ def create_artist_submission():
         city=form.city.data, 
         state=form.city.data,            
         phone=form.phone.data, 
-        genres=form.genres.data,            
+        genres=','.join(form.genres.data),       
         facebook_link=form.facebook_link.data,
         image_link=form.image_link.data
     )
@@ -332,7 +332,7 @@ def show_artist(artist_id):
   data={
     "id": artist.id,
     "name": artist.name,
-    "genres": artist.genres,
+    "genres": [x.strip() for x in artist.genres.split(',')],
     "city": artist.city,
     "state": artist.state,
     "phone": artist.phone,
@@ -354,7 +354,7 @@ def edit_artist(artist_id):
   artist_data = {
         "id": artist.id,
         "name": artist.name,
-        "genres": artist.genres,
+        "genres": [x.strip() for x in artist.genres.split(',')],
         "city": artist.city,
         "state": artist.state,
         "phone": artist.phone,
@@ -374,14 +374,14 @@ def edit_artist_submission(artist_id):
     artist.phone = form.phone.data
     artist.state = form.state.data
     artist.city = form.city.data
-    artist.genres = form.genres.data
+    artist.genres = ','.join(form.genres.data)
     artist.image_link = form.image_link.data
     artist.facebook_link = form.facebook_link.data
     
     db.session.commit()
     flash('The Artist ' + request.form['name'] + ' has been successfully updated!')
   except:
-    db.session.rolback()
+    db.session.rollback()
     flash('Error!  Update Unsuccessful')
   finally:
     db.session.close()

@@ -4,11 +4,11 @@ import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func
+from sqlalchemy import func, desc
 from flask_wtf import Form
 from forms import *
 from models import *
-
+recent_data_offset = 3
 def format_datetime(value, format='medium'):
   date = dateutil.parser.parse(value)
   if format == 'full':
@@ -21,7 +21,23 @@ app.jinja_env.filters['datetime'] = format_datetime
 #Controllers
 @app.route('/')
 def index():
-  return render_template('pages/home.html')
+  venues = Venue.query.order_by(desc(Venue.id)).limit(recent_data_offset)
+  venue_data = []
+  for v in venues:
+    venue_data.append({
+        "id": v.id,
+        "name": v.name
+    })
+
+  artists = Artist.query.order_by(desc(Artist.id)).limit(recent_data_offset)
+  artist_data = []
+  for artist in artists:
+    artist_data.append({
+        "id": artist.id,
+        "name": artist.name
+    })
+ 
+  return render_template('pages/home.html',venues=venue_data, artists=artist_data)
 
 #venues#
 #all Venues
@@ -103,7 +119,7 @@ def create_venue_submission():
 def search_venues():
   #case-insensitive search implemented
   search_term = request.form.get('search_term', '')
-  
+
   result = Venue.query.filter(func.lower(Venue.city) == func.lower(f'{search_term}'))
   if result.count() < 1:
     result = Venue.query.filter(func.lower(Venue.state) == func.lower(f'{search_term}'))
@@ -239,9 +255,7 @@ def delete_venue(venue_id):
 #all artists
 @app.route('/artists')
 def artists():
-  # TODO: replace with real data returned from querying the database
   data = []
-
   artists = Artist.query.all()
 
   for artist in artists:

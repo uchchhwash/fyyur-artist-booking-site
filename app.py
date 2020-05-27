@@ -1,10 +1,10 @@
 import json
 import dateutil.parser
 import babel
-from flask import Flask, render_template, request, Response, flash, redirect, url_for
+from flask import Flask, render_template, request, Response, flash, redirect, url_for, abort
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, text
 from flask_wtf import Form
 from forms import *
 from models import *
@@ -128,17 +128,16 @@ def create_venue_submission():
 def search_venues():
     # case-insensitive search implemented
     search_term = request.form.get('search_term', '')
-
-    result = Venue.query.filter(func.lower(
-        Venue.city) == func.lower(f'{search_term}'))
-    if result.count() < 1:
-        result = Venue.query.filter(func.lower(
-            Venue.state) == func.lower(f'{search_term}'))
-        if result.count() < 1:
-            result = Venue.query.filter(Venue.name.ilike(f'%{search_term}%'))
-
+    sql = text('select * from public."Venue" where LOWER(city)=:n').params(n=search_term.lower())
+    result = db.engine.execute(sql)
+    if result.rowcount < 1:
+        sql = text('select * from public."Venue" where LOWER(state)=:n').params(n=search_term.lower())
+        result = db.engine.execute(sql)
+        if result.rowcount  < 1:
+            sql = text('select * from public."Venue" where LOWER(name) LIKE :n ;').params(n="%"+search_term.lower()+"%")
+            result = db.engine.execute(sql)
     response = {
-        "count": result.count(),
+        "count": result.rowcount,
         "data": result
     }
     return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
@@ -149,6 +148,8 @@ def search_venues():
 def show_venue(venue_id):
     # shows the venue page with the given venue_id
     venue = Venue.query.get(venue_id)
+    if venue is None:
+        abort(404)
     shows = Show.query.filter_by(venue_id=venue_id).all()
     current_time = datetime.now()
     past_shows = []
@@ -194,6 +195,8 @@ def show_venue(venue_id):
 def edit_venue(venue_id):
     form = VenueForm()
     venue = Venue.query.get(venue_id)
+    if venue is None:
+        abort(404)
     venue = {
         "id": venue.id,
         "name": venue.name,
@@ -217,6 +220,8 @@ def edit_venue_submission(venue_id):
     try:
         form = VenueForm()
         venue = Venue.query.get(venue_id)
+        if venue is None:
+            abort(404)
         name = form.name.data
         venue.name = name
         venue.genres = ','.join(form.genres.data)
@@ -247,6 +252,8 @@ def delete_venue(venue_id):
     try:
         # Get venue by ID
         venue = Venue.query.get(venue_id)
+        if venue is None:
+            abort(404)
         venue_name = venue.name
 
         db.session.delete(venue)
@@ -307,17 +314,28 @@ def create_artist_submission():
 # search artists
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
+    # 
     search_term = request.form.get('search_term', '')
-
-    result = Artist.query.filter(func.lower(
-        Artist.city) == func.lower(f'{search_term}'))
-    if result.count() < 1:
-        result = Artist.query.filter(func.lower(
-            Artist.state) == func.lower(f'{search_term}'))
-        if result.count() < 1:
-            result = Artist.query.filter(Artist.name.ilike(f'%{search_term}%'))
+    sql = text('select * from public."Venue" where LOWER(city)=:n').params(n=search_term.lower())
+    result = db.engine.execute(sql)
+    if result.rowcount < 1:
+        sql = text('select * from public."Venue" where LOWER(state)=:n').params(n=search_term.lower())
+        result = db.engine.execute(sql)
+        if result.rowcount  < 1:
+            sql = text('select * from public."Venue" where LOWER(name) LIKE :n ;').params(n="%"+search_term.lower()+"%")
+            result = db.engine.execute(sql)
+    # 
+    search_term = request.form.get('search_term', '')
+    sql = text('select * from public."Artist" where LOWER(city)=:n').params(n=search_term.lower())
+    result = db.engine.execute(sql)
+    if result.rowcount < 1:
+        sql = text('select * from public."Artist" where LOWER(state)=:n').params(n=search_term.lower())
+        result = db.engine.execute(sql)
+        if result.rowcount  < 1:
+            sql = text('select * from public."Artist" where LOWER(name) LIKE :n ;').params(n="%"+search_term.lower()+"%")
+            result = db.engine.execute(sql)
     response = {
-        "count": result.count(),
+        "count": result.rowcount,
         "data": result
     }
     return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
@@ -327,6 +345,8 @@ def search_artists():
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
     artist = Artist.query.get(artist_id)
+    if artist is None:
+        abort(404)
     shows = Show.query.filter_by(artist_id=artist_id).all()
     past_shows = []
     upcoming_shows = []
@@ -369,6 +389,8 @@ def show_artist(artist_id):
 def edit_artist(artist_id):
     form = ArtistForm()
     artist = Artist.query.get(artist_id)
+    if artist is None:
+        abort(404)
     artist_data = {
         "id": artist.id,
         "name": artist.name,
@@ -388,6 +410,8 @@ def edit_artist_submission(artist_id):
     try:
         form = ArtistForm()
         artist = Artist.query.get(artist_id)
+        if artist is None:
+            abort(404)
         artist.name = form.name.data
         artist.phone = form.phone.data
         artist.state = form.state.data
@@ -412,6 +436,8 @@ def edit_artist_submission(artist_id):
 def delete_artist(artist_id):
     try:
         artist = Artist.query.get(artist_id)
+        if artist is None:
+            abort(404)
         artist_name = artist.name
         db.session.delete(artist)
         db.session.commit()

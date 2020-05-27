@@ -128,13 +128,16 @@ def create_venue_submission():
 def search_venues():
     # case-insensitive search implemented
     search_term = request.form.get('search_term', '')
-    sql = text('select * from public."Venue" where LOWER(city)=:n').params(n=search_term.lower())
+    sql = text(
+        'select * from public."Venue" where LOWER(city)=:n').params(n=search_term.lower())
     result = db.engine.execute(sql)
     if result.rowcount < 1:
-        sql = text('select * from public."Venue" where LOWER(state)=:n').params(n=search_term.lower())
+        sql = text(
+            'select * from public."Venue" where LOWER(state)=:n').params(n=search_term.lower())
         result = db.engine.execute(sql)
-        if result.rowcount  < 1:
-            sql = text('select * from public."Venue" where LOWER(name) LIKE :n ;').params(n="%"+search_term.lower()+"%")
+        if result.rowcount < 1:
+            sql = text('select * from public."Venue" where LOWER(name) LIKE :n ;').params(
+                n="%"+search_term.lower()+"%")
             result = db.engine.execute(sql)
     response = {
         "count": result.rowcount,
@@ -314,25 +317,31 @@ def create_artist_submission():
 # search artists
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
-    # 
+    #
     search_term = request.form.get('search_term', '')
-    sql = text('select * from public."Venue" where LOWER(city)=:n').params(n=search_term.lower())
+    sql = text(
+        'select * from public."Venue" where LOWER(city)=:n').params(n=search_term.lower())
     result = db.engine.execute(sql)
     if result.rowcount < 1:
-        sql = text('select * from public."Venue" where LOWER(state)=:n').params(n=search_term.lower())
+        sql = text(
+            'select * from public."Venue" where LOWER(state)=:n').params(n=search_term.lower())
         result = db.engine.execute(sql)
-        if result.rowcount  < 1:
-            sql = text('select * from public."Venue" where LOWER(name) LIKE :n ;').params(n="%"+search_term.lower()+"%")
+        if result.rowcount < 1:
+            sql = text('select * from public."Venue" where LOWER(name) LIKE :n ;').params(
+                n="%"+search_term.lower()+"%")
             result = db.engine.execute(sql)
-    # 
+    #
     search_term = request.form.get('search_term', '')
-    sql = text('select * from public."Artist" where LOWER(city)=:n').params(n=search_term.lower())
+    sql = text(
+        'select * from public."Artist" where LOWER(city)=:n').params(n=search_term.lower())
     result = db.engine.execute(sql)
     if result.rowcount < 1:
-        sql = text('select * from public."Artist" where LOWER(state)=:n').params(n=search_term.lower())
+        sql = text(
+            'select * from public."Artist" where LOWER(state)=:n').params(n=search_term.lower())
         result = db.engine.execute(sql)
-        if result.rowcount  < 1:
-            sql = text('select * from public."Artist" where LOWER(name) LIKE :n ;').params(n="%"+search_term.lower()+"%")
+        if result.rowcount < 1:
+            sql = text('select * from public."Artist" where LOWER(name) LIKE :n ;').params(
+                n="%"+search_term.lower()+"%")
             result = db.engine.execute(sql)
     response = {
         "count": result.rowcount,
